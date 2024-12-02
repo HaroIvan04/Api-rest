@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Car table</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body>
+    <h1>Car Registration</h1>
+    <form id="carForm">
+        <div class="mb-3 mt-3">
+          <label for="vin">Vin:</label>
+          <input type="number" class="form-control" id="vin" placeholder="Enter vin" name="vin">
+        </div>
+        <div class="mb-3 mt-3">
+          <label for="brand">Brand:</label>
+          <input type="txt" class="form-control" id="brand" placeholder="Enter brand" name="brand">
+        </div>
+        <div class="mb-3 mt-3">
+          <label for="model">Model:</label>
+          <input type="txt" class="form-control" id="model" placeholder="Enter model" name="model">
+        </div>
+        <div class="mb-3 mt-3">
+          <label for="year">Year:</label>
+          <input type="number" class="form-control" id="year" placeholder="Enter year" name="year">
+        </div>
+        <div class="mb-3 mt-3">
+          <label for="color">Color:</label>
+          <input type="txt" class="form-control" id="color" placeholder="Enter color" name="color">
+        </div>
+		<div class="mb-3 mt-3">
+			<label for="price">Price:</label>
+			<input type="number" class="form-control" id="price" placeholder="Enter price" name="price">
+		</div>
+        <button type="submit" class="btn btn-dark">Submit</button>
+    </form>
+    <br>
+    <table class="table table-dark" id="carsTable">
+        <thead>
+            <tr>
+                <th>id</th>
+                <th>Vin</th>
+                <th>Brand</th>
+                <th>Model</th>
+                <th>Year</th>
+                <th>Color</th>
+				<th>Price</th>
+                <th>Options</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+    <script>
+        // URL de la API
+        const apiURL = 'http://18.188.40.187:8080/car';
+
+
+        async function loadCars() {
+            try {
+                const response = await fetch(apiURL);
+                const cars = await response.json();
+
+
+                const tableBody = document.querySelector('#carsTable tbody');
+
+
+                cars.forEach(car => {
+                    const row = document.createElement('tr');
+                    const idCell = document.createElement('td')
+                    const vinCell = document.createElement('td')
+                    const brandCell = document.createElement('td')
+                    const modelCell = document.createElement('td')
+                    const yearCell = document.createElement('td')
+                    const colorCell = document.createElement('td')
+					const priceCell = document.createElement('td')
+                    const optionsCell = document.createElement('td')
+                    const deleteButton = document.createElement('button')
+                    const updateButton = document.createElement('button')
+
+
+                    row.id = "row" + car.vin
+                    idCell.id = "id" + car.vin
+                    vinCell.id = "vin" + car.vin
+                    brandCell.id = "brand" + car.vin
+                    modelCell.id = "model" + car.vin
+                    yearCell.id = "year" + car.vin
+                    colorCell.id = "color" + car.vin
+					priceCell.id = "price" + car.vin
+                    deleteButton.id = "delete" + car.vin
+                    updateButton.id = "update" + car.vin
+
+
+                    idCell.textContent = car.id
+					vinCell.textContent = car.vin
+					brandCell.textContent = car.brand
+					modelCell.textContent = car.model
+					yearCell.textContent = car.year
+					colorCell.textContent = car.color
+					priceCell.textContent = car.price
+
+
+                    deleteButton.textContent = 'delete'
+                    deleteButton.addEventListener('click', () => deleteCar(car.vin))
+                    deleteButton.className='btn btn-danger btn-sm'
+                    updateButton.textContent = 'edit'
+                    updateButton.addEventListener('click', () => updateCar(car.vin))
+                    updateButton.className='btn btn-warning btn-sm'
+                    
+
+                    row.appendChild(idCell)
+                    row.appendChild(vinCell)
+                    row.appendChild(brandCell)
+                    row.appendChild(modelCell)
+                    row.appendChild(yearCell)
+                    row.appendChild(colorCell)
+					row.appendChild(priceCell)
+                    optionsCell.appendChild(deleteButton)
+                    optionsCell.appendChild(updateButton)
+                    row.appendChild(optionsCell)
+
+
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error al cargar los datos:', error);
+            }
+        }
+
+
+        async function deleteCar(vin) {
+            const deleteURL = `${apiURL}/deleteByVin=${vin}`;
+            
+            try {
+                const response = await fetch(deleteURL, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert(`Carro con vin ${vin} eliminado.`);
+                    // Recargar la lista de autos después de eliminar
+                    document.querySelector('#carsTable tbody').innerHTML = ''; // Limpia la tabla
+                    await loadCars(); // Vuelve a cargar los autos
+                } else {
+                    alert('No se pudo eliminar el auto.');
+                }
+            } catch (error) {
+                console.error('Error al intentar eliminar el auto:', error);
+            }
+        }
+
+        async function updateCar(vin) {
+            // Obtener la referencia a la fila y celdas que se van a editar
+            editRow = document.getElementById("row"+vin)
+            const idCell = document.getElementById("id"+vin);
+            const vinCell = document.getElementById("vin"+vin);
+            const brandCell = document.getElementById("brand"+vin);
+            const modelCell = document.getElementById("model"+vin);
+            const yearCell = document.getElementById("year"+vin);
+            const colorCell = document.getElementById("color"+vin);
+			const priceCell = document.getElementById("price"+vin);
+            const updateButton = document.getElementById("update"+vin);
+
+            // Enfocar a la fila que se edita
+            editRow.className="table table-striped"
+
+            // Establecer como editables las celdas de la fila
+            vinCell.setAttribute('contenteditable', true)
+            brandCell.setAttribute('contenteditable', true)
+            modelCell.setAttribute('contenteditable', true)
+            yearCell.setAttribute('contenteditable', true)
+            colorCell.setAttribute('contenteditable', true)
+			priceCell.setAttribute('contenteditable', true)
+
+            if(updateButton.textContent === "Save") {
+                const updatedVin = vinCell.textContent.trim();
+                const updatedBrand = brandCell.textContent.trim();
+                const updatedModel = modelCell.textContent.trim();
+                const updatedYear = yearCell.textContent.trim();
+                const updatedColor = colorCell.textContent.trim();
+                const updatedPrice = priceCell.textContent.trim();
+                if(!updatedVin || !updatedBrand || !updatedModel || !updatedYear || !updatedColor || !updatedPrice){
+                    alert("Se deben llenar todos los campos para poder registrar un auto")
+                    return;
+                }
+                saveCarUpdated(idCell.innerHTML, vin, vinCell.innerHTML, brandCell.innerHTML, modelCell.innerHTML, yearCell.innerHTML,colorCell.innerHTML, priceCell.innerHTML);
+            }
+            
+            updateButton.textContent = "Save";
+            updateButton.className = "btn btn-primary";
+            vinCell.focus();
+        }
+
+        async function saveCarUpdated(carId, previousVin, updatedVin, updatedBrand, updatedModel, updatedYear, updatedColor, updatedPrice){
+            const updateUrl = `${apiURL}/updateByVin=${previousVin}`;
+
+            // Datos del auto
+            const car = {
+                id : carId,
+                vin : updatedVin,
+                brand : updatedBrand,
+                model : updatedModel,
+                year : updatedYear,
+                color : updatedColor,
+				price : updatedPrice
+            }
+            try{
+                const response = await fetch(updateUrl, {
+                    method: 'PUT',
+                     headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(car)
+                });
+
+                 if (response.ok) {
+                    alert('Auto actualizado con éxito');
+                    document.querySelector('#carsTable tbody').innerHTML = '';
+                    await loadCars(); // Recarga la tabla con los autos actualizados
+                } else {
+                    console.error('Error al actualizar el auto:', response.status);
+                }
+            }
+            catch(error){
+                console.error('Error de conexión al actualizar:', error);
+            }
+        }
+
+        // botón del formulario
+        document.getElementById("carForm").addEventListener("submit", addCarsFromForm)
+
+        // agregar un autos desde el formulario
+        async function addCarsFromForm(event){
+            event.preventDefault();
+            var vinValue=document.getElementById("vin").value;
+            var brandValue=document.getElementById("brand").value;
+            var modelValue=document.getElementById("model").value;
+            var yearValue=document.getElementById("year").value;
+            var colorValue=document.getElementById("color").value;
+			var priceValue=document.getElementById("price").value;
+
+            if (!vinValue || !brandValue || !modelValue || !yearValue || !colorValue || !priceValue) {
+                alert("Todos los campos son obligatorios y no deben contener solo espacios.");
+                return; //
+            }
+
+            try {
+                const response = await fetch(apiURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Indicamos que el cuerpo es JSON
+                    },
+                    body: JSON.stringify({ vin: vinValue,
+                                           brand: brandValue,
+                                           model: modelValue,
+                                           year: yearValue,
+                                           color: colorValue,
+											price: priceValue})
+                });
+
+                if (response.ok) {
+                    alert('Auto agregado con éxito');
+                    document.querySelector('#carsTable tbody').innerHTML = ''; // Limpia la tabla
+                    await loadCars(); // Vuelve a cargar los autos
+                    document.querySelector("#carForm").reset();
+                } else {
+                    console.error('Error al agregar el auto: ', response.status);
+                    alert("Vin ya registrado");
+                }
+            } catch (error) {
+                console.error('Error de conexión:', error);
+            }
+        }
+
+        // LLamada a la función para cargar los autos mientras se carga la página
+        window.onload = loadCars;
+    </script>
+</body>
+
+</html>
